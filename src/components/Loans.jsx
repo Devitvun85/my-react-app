@@ -1,50 +1,106 @@
-export default function Loans({ loans, setLoans, books, setBooks }) {
-  function borrow(book) {
-    if (book.available <= 0) return;
-
-    setLoans([...loans, { id: Date.getTime(), bookTitle: book.title }]);
-
+export default function Loans({ loans, setLoans, books, setBooks, user }) {
+  function returnBook(loanId, bookId) {
+    setLoans(loans.filter((l) => l.id !== loanId));
     setBooks(
       books.map((b) =>
-        b.id === book.id ? { ...b, available: b.available - 1 } : b,
+        b.id === bookId ? { ...b, available: b.available + 1 } : b,
       ),
     );
   }
 
-  function returnBook(id, title) {
-    setLoans(loans.filter((l) => l.id !== id));
+  // Member view - show only their loans
+  if (user === "member") {
+    return (
+      <div className="container">
+        <div className="page-header">
+          <h2>📋 My Loans</h2>
+          <p className="page-subtitle">Books you have borrowed</p>
+        </div>
 
-    setBooks(
-      books.map((b) =>
-        b.title === title ? { ...b, available: b.available + 1 } : b,
-      ),
+        {loans.length > 0 ? (
+          <div className="loans-list">
+            {loans.map((l) => (
+              <div key={l.id} className="loan-card">
+                <img src={l.bookImage} alt={l.bookTitle} className="loan-img" />
+                <div className="loan-details">
+                  <h4>{l.bookTitle}</h4>
+                  <p className="loan-author">by {l.bookAuthor}</p>
+                  <p className="loan-date">Borrowed: {l.borrowDate}</p>
+                  <p className="loan-date">Due: {l.dueDate}</p>
+                </div>
+                <button
+                  className="btn-return"
+                  onClick={() => returnBook(l.id, l.bookId)}
+                >
+                  ↩️ Return
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <div className="empty-icon">📖</div>
+            <h3>No active loans</h3>
+            <p>
+              You haven't borrowed any books yet. Go to Books page to borrow!
+            </p>
+          </div>
+        )}
+      </div>
     );
   }
 
+  // Staff view - show all loans with dates
   return (
     <div className="container">
-      <h2>Borrow Books</h2>
-
-      <div className="grid">
-        {books.map((b) => (
-          <div key={b.id} className="book-card">
-            <img src={b.image} alt="" className="book-img" />
-            <h4>{b.title}</h4>
-            <p>{b.available} available</p>
-
-            <button onClick={() => borrow(b)}>📖 Borrow</button>
-          </div>
-        ))}
+      <div className="page-header">
+        <h2>📊 Loan History</h2>
+        <p className="page-subtitle">All active book loans</p>
       </div>
 
-      <h3>My Loans</h3>
-
-      {loans.map((l) => (
-        <div key={l.id} className="loan-card">
-          <span>📚 {l.bookTitle}</span>
-          <button onClick={() => returnBook(l.id, l.bookId)}>Return</button>
+      {loans.length > 0 ? (
+        <div className="loan-table">
+          <div className="loan-table-header">
+            <div>Book</div>
+            <div>Borrower</div>
+            <div>Borrow Date</div>
+            <div>Due Date</div>
+            <div>Action</div>
+          </div>
+          {loans.map((l) => (
+            <div key={l.id} className="loan-table-row">
+              <div className="loan-book-info">
+                <img
+                  src={l.bookImage}
+                  alt={l.bookTitle}
+                  className="loan-table-img"
+                />
+                <div>
+                  <strong>{l.bookTitle}</strong>
+                  <p>{l.bookAuthor}</p>
+                </div>
+              </div>
+              <div>{l.borrower}</div>
+              <div>{l.borrowDate}</div>
+              <div>{l.dueDate}</div>
+              <div>
+                <button
+                  className="btn-return-small"
+                  onClick={() => returnBook(l.id, l.bookId)}
+                >
+                  Mark Returned
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        <div className="empty-state">
+          <div className="empty-icon">📊</div>
+          <h3>No active loans</h3>
+          <p>No books are currently borrowed</p>
+        </div>
+      )}
     </div>
   );
 }
